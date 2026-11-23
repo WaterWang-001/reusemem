@@ -19,6 +19,12 @@ it does not establish that the rule can infer keys, conflicts, or applicability
 from a coding trajectory. In particular, newer arrival is not necessarily a
 newer repository revision.
 
+The revision control conservatively archives newly arriving observations scoped
+to an older revision, even if a newer same-key record has been evicted. It does
+not automatically promote such delayed observations to current advice. Earlier
+unaffected active notes are retained normally; this rule does not infer which
+code changes invalidate them.
+
 ## Planned full-system baselines
 
 These methods are not implemented by the bootstrap policies above. Pin the

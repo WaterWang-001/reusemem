@@ -188,7 +188,15 @@ class KeyedRevision(MemoryPolicy):
             previous = [entry for entry in self.entries
                         if entry.status == "active" and entry.experience.category == record.category
                         and entry.experience.key == record.key]
-            if previous and max(entry.revision_order for entry in previous) > incoming.revision_order:
+            # A newer resident note may already have been evicted. Treat newly
+            # arriving older-revision evidence conservatively even in that case;
+            # eviction does not make its scope current. Existing unaffected
+            # active notes remain available until explicitly revised or evicted.
+            older_scope = incoming.revision_order < self.revision_order[self.current_revision]
+            newer_resident = previous and max(
+                entry.revision_order for entry in previous
+            ) > incoming.revision_order
+            if older_scope or newer_resident:
                 incoming.status = "historical"
                 actions.append({"action": "archive_incoming", "id": record.id, "reason": "older_declared_revision"})
             else:

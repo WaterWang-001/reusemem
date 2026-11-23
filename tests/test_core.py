@@ -42,6 +42,23 @@ def test_current_and_historical_records_share_storage_budget():
     assert policy.read(query("history", "r1")) == ()
 
 
+def test_delayed_old_evidence_stays_historical_after_newer_note_is_evicted():
+    policy = KeyedRevision(100, 100)
+    policy.begin_episode("t1", "r1")
+    policy.write([experience("old", "t1", "Rejects empty input.")])
+    policy.begin_episode("t2", "r2")
+    policy.write([experience("new", "t2", "Accepts empty input.", "r2", supersedes=("old",))])
+    policy.write([
+        experience("other-a", "t2", "Unrelated observation A.", "r2", key="other-a"),
+        experience("other-b", "t2", "Unrelated observation B.", "r2", key="other-b"),
+    ])
+    assert all(entry.experience.key != "parser" for entry in policy.entries)
+    policy.begin_episode("t3", "r2")
+    policy.write([experience("late-old", "t3", "Rejects empty input.", "r1")])
+    assert policy.stored_tokens <= 100
+    assert policy.read(query()) == ()
+
+
 def test_retrieval_cap_does_not_partially_expose_an_oversize_note():
     policy = AppendOnly(1000, 10)
     policy.begin_episode("t1", "r1")
